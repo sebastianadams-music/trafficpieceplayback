@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Traffic Piece</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .main-video iframe {
+      width: 100%;
+      height: 450px;
+    }
+    .secondary-videos {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    .secondary-videos iframe {
+      width: 49%;
+      height: 250px;
+    }
+    #video-container p {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Traffic Piece - Sebastian Adams</h1>
+  <div id="video-container"></div>
+
+  <script>
+    const VIDEO_START_HOUR = 18;
+    const VIDEO_START_MIN = 26;
+    const VIDEO_START_SEC = 24;
+    const VIDEO_DURATION = 42900; // 11h 55m
+
+    // List of video IDs
+    const VIDEOS = {
+      main: "l0FIFfY2K1c",               // Main video (top)
+      secondary1: "l0FIFfY2K1c",          // Replace with actual ID - surveillance cam 1
+      secondary2: "l0FIFfY2K1c"           // Replace with actual ID - surveillance cam 2
+    };
+
+    function getSecondsSinceStart() {
+      const now = new Date();
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        VIDEO_START_HOUR,
+        VIDEO_START_MIN,
+        VIDEO_START_SEC
+      );
+      return Math.floor((now - start) / 1000);
+    }
+
+    function createIframe(videoId, startSeconds) {
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=${startSeconds}&controls=1`;
+      iframe.allow = "autoplay; encrypted-media";
+      iframe.allowFullscreen = true;
+      return iframe;
+    }
+
+    function showVideos() {
+      const secondsSinceStart = getSecondsSinceStart();
+      const container = document.getElementById("video-container");
+
+      if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
+        const mainWrapper = document.createElement("div");
+        mainWrapper.className = "main-video";
+        mainWrapper.appendChild(createIframe(VIDEOS.main, secondsSinceStart));
+
+        const secondaryWrapper = document.createElement("div");
+        secondaryWrapper.className = "secondary-videos";
+        secondaryWrapper.appendChild(createIframe(VIDEOS.secondary1, secondsSinceStart));
+        secondaryWrapper.appendChild(createIframe(VIDEOS.secondary2, secondsSinceStart));
+
+        container.appendChild(mainWrapper);
+        container.appendChild(secondaryWrapper);
+      } else {
+        container.innerHTML = "<p>This video will return tomorrow at 06:26:24</p>";
+      }
+    }
+
+    showVideos();
+  </script>
+</body>
+</html>
