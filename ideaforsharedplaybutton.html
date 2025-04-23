@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Synchronized YouTube Playback</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .main-video iframe {
+      width: 100%;
+      height: 450px;
+    }
+    .secondary-videos {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    .secondary-videos iframe {
+      width: 49%;
+      height: 250px;
+    }
+    #video-container {
+      display: none;
+    }
+    #play-button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      margin: 20px auto;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="message-container"></div>
+  <button id="play-button">▶️ Play All Videos</button>
+  <div id="video-container">
+    <div class="main-video" id="main-player"></div>
+    <div class="secondary-videos">
+      <div id="secondary-player-1"></div>
+      <div id="secondary-player-2"></div>
+    </div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    const VIDEO_START_HOUR = 6;
+    const VIDEO_START_MIN = 26;
+    const VIDEO_START_SEC = 24;
+    const VIDEO_DURATION = 42900; // 11h 55m
+    const VIDEOS = {
+      main: "l0FIFfY2K1c",
+      secondary1: "VIDEO_ID_2",  // Replace these
+      secondary2: "VIDEO_ID_3"
+    };
+
+    let players = {};
+
+    function getSecondsSinceStart() {
+      const now = new Date();
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        VIDEO_START_HOUR,
+        VIDEO_START_MIN,
+        VIDEO_START_SEC
+      );
+      return Math.floor((now - start) / 1000);
+    }
+
+    function onYouTubeIframeAPIReady() {
+      const secondsSinceStart = getSecondsSinceStart();
+      if (secondsSinceStart < 0 || secondsSinceStart > VIDEO_DURATION) {
+        document.getElementById("message-container").innerHTML =
+          "<p>This video will return tomorrow at 06:26:24</p>";
+        document.getElementById("play-button").style.display = "none";
+        return;
+      }
+
+      players.main = new YT.Player("main-player", {
+        height: "450",
+        width: "100%",
+        videoId: VIDEOS.main,
+        playerVars: {
+          start: secondsSinceStart,
+          controls: 1
+        }
+      });
+
+      players.secondary1 = new YT.Player("secondary-player-1", {
+        height: "250",
+        width: "100%",
+        videoId: VIDEOS.secondary1,
+        playerVars: {
+          start: secondsSinceStart,
+          controls: 1
+        }
+      });
+
+      players.secondary2 = new YT.Player("secondary-player-2", {
+        height: "250",
+        width: "100%",
+        videoId: VIDEOS.secondary2,
+        playerVars: {
+          start: secondsSinceStart,
+          controls: 1
+        }
+      });
+
+      // Show play button
+      document.getElementById("play-button").style.display = "block";
+    }
+
+    document.getElementById("play-button").addEventListener("click", function () {
+      document.getElementById("video-container").style.display = "block";
+      document.getElementById("message-container").style.display = "none";
+      this.style.display = "none"; // hide play button
+
+      // Start all players
+      players.main.playVideo();
+      players.secondary1.playVideo();
+      players.secondary2.playVideo();
+    });
+  </script>
+</body>
+</html>
