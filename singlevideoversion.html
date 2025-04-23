@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Traffic Piece</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    iframe {
+      width: 80%;
+      height: 450px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container"></div>
+
+  <script>
+    const VIDEO_ID = "l0FIFfY2K1c"; // Your video ID
+    const VIDEO_START_HOUR = 6;
+    const VIDEO_START_MIN = 26;
+    const VIDEO_START_SEC = 24;
+    const VIDEO_DURATION = 42900; // 11h 55m in seconds
+
+    function getSecondsSinceStart() {
+      const now = new Date();
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        VIDEO_START_HOUR,
+        VIDEO_START_MIN,
+        VIDEO_START_SEC
+      );
+      return Math.floor((now - start) / 1000);
+    }
+
+    function showVideo() {
+      const secondsSinceStart = getSecondsSinceStart();
+
+      if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&start=${secondsSinceStart}&controls=1`;
+        iframe.allow = "autoplay; encrypted-media";
+        document.getElementById("video-container").appendChild(iframe);
+      } else {
+        document.getElementById("video-container").innerHTML =
+          "<p>This video will return tomorrow at 06:26:24</p>";
+      }
+    }
+
+    showVideo();
+  </script>
+</body>
+</html>
