@@ -1,93 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Traffic Piece</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 30px;
-    }
-    .main-video iframe {
-      width: 100%;
-      height: 450px;
-    }
-    .secondary-videos {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-      gap: 10px;
-    }
-    .secondary-videos iframe {
-      width: 49%;
-      height: 250px;
-    }
-    #video-container p {
-      font-size: 1.2em;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Piece - Sebastian Adams</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 30px;
+            background-color: black;
+            color: whitesmoke;
+            overflow-x: hidden; 
+        }
+        .main-video { width: 100%; 
+          /* height: 450px;  */
+          background: #111; }
+        
+        /* CONTAINER FOR BOTTOM SECTION */
+        .secondary-videos { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 20px; 
+            gap: 10px; 
+            position: relative; 
+            /* REMOVED flex-wrap: wrap; to ensure they stay on one line */
+        }
+        
+        .secondary-video { 
+            width: 49%; 
+            /* height: 250px;  */
+            background: #111;
+            /* Added min-width: 0 to allow shrinking on very small screens */
+            min-width: 0; 
+        }
+        
+        /* DESKTOP IMAGE STYLE (Default) */
+        .center-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%; 
+            z-index: 999; 
+            pointer-events: none; 
+            transition: opacity 0.5s;
+        }
+        
+        .center-overlay img {
+            width: 100%;       
+            height: auto;      
+            display: block;
+        }
+
+        /* --- MOBILE LAYOUT --- */
+        @media (max-width: 1000px) {
+            .secondary-video {
+                /* Reduce height on mobile so they don't look stretched */
+                /* height: 150px;  */
+            }
+
+            .center-overlay {
+                position: static;      
+                transform: none;       
+                width: 100%;           
+                margin-top: 20px;
+                /* Since flex-wrap is gone, we can't use 'order' to push it down 
+                   if it is structurally in the middle. 
+                   However, since we want videos side-by-side, 
+                   the image CANNOT constitute a column in the middle anymore.
+                   The HTML structure places the image BETWEEN the videos.
+                   To fix this, we will use absolute positioning to move it 
+                   below the videos on mobile.
+                */
+                position: absolute;
+                top: 100%; /* Push to bottom of container */
+                left: 0;
+            }
+            
+            /* Add margin to bottom of container to make room for the moved image */
+            .secondary-videos {
+                margin-bottom: 300px; 
+            }
+        }
+
+        #video-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        #play-button {
+            background: white; border: none; padding: 20px 40px;
+            cursor: pointer; font-size: 24px; border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Traffic Piece - Sebastian Adams</h1>
-  <div id="video-container"></div>
 
-  <script>
-    const VIDEO_START_HOUR = 6;
-    const VIDEO_START_MIN = 26;
-    const VIDEO_START_SEC = 24;
-    const VIDEO_DURATION = 42900; // 11h 55m
+    <div id="video-overlay">
+        <button id="play-button" onclick="startEverything()">
+             <span style="font-size: 32px;">&#9658;</span>
+        </button>
+    </div>
 
-    // List of video IDs
-    const VIDEOS = {
-      main: "l0FIFfY2K1c",               // Main video (top)
-      secondary1: "kcqkToTfs1A",          // Replace with actual ID - surveillance cam 1
-      secondary2: "xzsbPvHpn24"           // Replace with actual ID - surveillance cam 2
-    };
+    <h1>Traffic Piece - Sebastian Adams</h1>
+    <div id="video-container">
+        <div id="player-main" class="main-video"></div>
+        
+        <div id="secondary-wrapper" class="secondary-videos">
+            <div id="player-side1" class="secondary-video"></div>
+            
+            <div id="overlay-container" class="center-overlay" style="display:none;">
+                <img id="dynamic-image" src="" alt="">
+            </div>
+            
+            <div id="player-side2" class="secondary-video"></div>
+        </div>
+    </div>
 
-    function getSecondsSinceStart() {
-      const now = new Date();
-      const start = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        VIDEO_START_HOUR,
-        VIDEO_START_MIN,
-        VIDEO_START_SEC
-      );
-      return Math.floor((now - start) / 1000);
-    }
+    <script>
+        const TEST_MODE = false; 
+        const TEST_START_OFFSET = 9000; 
 
-    function createIframe(videoId, startSeconds) {
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=${startSeconds}&controls=1`;
-      iframe.allow = "autoplay; encrypted-media";
-      iframe.allowFullscreen = true;
-      return iframe;
-    }
+        const VIDEO_START_HOUR = 6;
+        const VIDEO_START_MIN = 26;
+        const VIDEO_START_SEC = 24;
+        const VIDEO_DURATION = 42900; 
 
-    function showVideos() {
-      const secondsSinceStart = getSecondsSinceStart();
-      const container = document.getElementById("video-container");
+        let pageLoadTime = null;
 
-      if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
-        const mainWrapper = document.createElement("div");
-        mainWrapper.className = "main-video";
-        mainWrapper.appendChild(createIframe(VIDEOS.main, secondsSinceStart));
+        const RAW_FILES = [
+            "00blank.png", "0715.png", "0719.png", "0722.png", "0725.png", "0728.png", "0731.png", "0734.png", 
+            "0736.png", "0739.png", "0742.png", "0745.png", "0750.png", "0754.png", "0757.png", "0801.png", 
+            "0803.png", "0809.png", "0812.png", "0840.png", "0843.png", "0847.png", "0851.png", "0855.png", 
+            "0858.png", "0902.png", "0905.png", "0909.png", "0913.png", "0916.png", "0920.png", "0924.png", 
+            "0928.png", "0932.png", "0935.png", "0938.png", "0941.png", "1012.png", "1016.png", "1020.png", 
+            "1023.png", "1027.png", "1031.png", "1036.png", "1039.png", "1042.png", "1046.png", "1050.png", 
+            "1053.png", "1057.png", "1101.png", "1104.png", "1108.png", "1111.png", "1114.png", "1125.png", 
+            "1129.png", "1132.png", "1135.png", "1139.png", "1143.png", "1146.png", "1150.png", "1154.png", 
+            "1157.png", "1200.png", "1204.png", "1208.png", "1211.png", "1214.png", "1217.png", "1220.png", 
+            "1224.png", "1307.png", "1311.png", "1314.png", "1318.png", "1322.png", "1325.png", "1328.png", 
+            "1332.png", "1336.png", "1340.png", "1343.png", "1346.png", "1350.png", "1354.png", "1358.png", 
+            "1402.png", "1405.png", "1409.png", "1503.png", "1507.png", "1511.png", "1515.png", "1519.png", 
+            "1523.png", "1527.png", "1531.png", "1535.png", "1538.png", "1542.png", "1546.png", "1549.png", 
+            "1552.png", "1556.png", "1559.png", "1602.png", "1605.png", "1707.png", "1710.png", "1714.png", 
+            "1718.png", "1722.png", "1725.png", "1729.png", "1733.png", "1736.png", "1739.png", "1742.png", 
+            "1746.png", "1749.png", "1753.png", "1756.png", "1759.png", "1803.png", "1806.png"
+        ];
 
-        const secondaryWrapper = document.createElement("div");
-        secondaryWrapper.className = "secondary-videos";
-        secondaryWrapper.appendChild(createIframe(VIDEOS.secondary1, secondsSinceStart));
-        secondaryWrapper.appendChild(createIframe(VIDEOS.secondary2, secondsSinceStart));
+        const IMAGE_DATA = RAW_FILES.map(filename => {
+            if (filename.startsWith("00blank")) {
+                return { filename: filename, totalMinutes: 0 };
+            }
+            const timePart = filename.substring(0, 4); 
+            const hours = parseInt(timePart.substring(0, 2), 10);
+            const mins = parseInt(timePart.substring(2, 4), 10);
+            return {
+                filename: filename,
+                totalMinutes: (hours * 60) + mins
+            };
+        });
 
-        container.appendChild(mainWrapper);
-        container.appendChild(secondaryWrapper);
-      } else {
-        container.innerHTML = "<p>This video will return tomorrow at 06:26:24</p>";
-      }
-    }
+        const VIDEOS = {
+            main: "l0FIFfY2K1c",
+            secondary1: "kcqkToTfs1A",
+            secondary2: "xzsbPvHpn24"
+        };
 
-    showVideos();
-  </script>
+        let players = [];
+
+        function updateOverlayImage() {
+            const secsPlayed = getSecondsSinceStart();
+            const startOfDaySeconds = (VIDEO_START_HOUR * 3600) + (VIDEO_START_MIN * 60) + VIDEO_START_SEC;
+            
+            const currentTotalSeconds = startOfDaySeconds + secsPlayed;
+            const currentTotalMinutes = Math.floor(currentTotalSeconds / 60);
+
+            let selectedImage = null;
+            
+            for (let i = 0; i < IMAGE_DATA.length; i++) {
+                if (IMAGE_DATA[i].totalMinutes <= currentTotalMinutes) {
+                    selectedImage = IMAGE_DATA[i];
+                } else {
+                    break; 
+                }
+            }
+
+            const container = document.getElementById('overlay-container');
+            const imgElement = document.getElementById('dynamic-image');
+
+            if (selectedImage) {
+                const diff = currentTotalMinutes - selectedImage.totalMinutes;
+                if (diff <= 5) {
+                    const newSrc = "notebook/" + selectedImage.filename;
+                    if (!imgElement.src.includes(newSrc)) {
+                        imgElement.src = newSrc;
+                    }
+                    container.style.display = "block";
+                } else {
+                    container.style.display = "none";
+                }
+            } else {
+                container.style.display = "none";
+            }
+        }
+
+        function getSecondsSinceStart() {
+            if (TEST_MODE) {
+                if (!pageLoadTime) return TEST_START_OFFSET;
+                const secondsPassedSinceClick = Math.floor((Date.now() - pageLoadTime) / 1000);
+                return TEST_START_OFFSET + secondsPassedSinceClick;
+            }
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), VIDEO_START_HOUR, VIDEO_START_MIN, VIDEO_START_SEC);
+            return Math.floor((now - start) / 1000);
+        }
+
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+
+        function onYouTubeIframeAPIReady() {
+            // API is ready
+        }
+
+        function startEverything() {
+            document.getElementById('video-overlay').style.display = 'none';
+
+            pageLoadTime = Date.now();
+            const secondsSinceStart = getSecondsSinceStart();
+            
+            const playerConfig = (videoId, extraTimeOffset = 0, volumeLevel = 100) => {
+                return {
+                    videoId: videoId,
+                    playerVars: { 
+                        'start': secondsSinceStart + extraTimeOffset, 
+                        'controls': 0, 
+                        'disablekb': 1,
+                        'origin': window.location.origin,
+                    },
+                    events: {
+                        'onReady': (event) => {
+                            event.target.setVolume(volumeLevel); // Correct way to set volume
+                            event.target.playVideo();
+                        }
+                    }
+                };
+            };
+
+            if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
+                // Main: 100% volume
+                players.push(new YT.Player('player-main', playerConfig(VIDEOS.main, 226, 100)));
+                // Sides: 25% volume (lowered as requested)
+                players.push(new YT.Player('player-side1', playerConfig(VIDEOS.secondary1, 0, 25)));
+                players.push(new YT.Player('player-side2', playerConfig(VIDEOS.secondary2, 0, 25)));
+
+                updateOverlayImage();
+                setInterval(updateOverlayImage, 10000);
+
+            } else {
+                document.getElementById("video-container").innerHTML = "<p>This video will return tomorrow at 06:26:24</p>";
+            }
+        }
+    </script>
 </body>
 </html>
