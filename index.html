@@ -24,14 +24,12 @@
             margin-top: 20px; 
             gap: 10px; 
             position: relative; 
-            /* REMOVED flex-wrap: wrap; to ensure they stay on one line */
         }
         
         .secondary-video { 
             width: 49%; 
             /* height: 250px;  */
             background: #111;
-            /* Added min-width: 0 to allow shrinking on very small screens */
             min-width: 0; 
         }
         
@@ -56,7 +54,6 @@
         /* --- MOBILE LAYOUT --- */
         @media (max-width: 1000px) {
             .secondary-video {
-                /* Reduce height on mobile so they don't look stretched */
                 /* height: 150px;  */
             }
 
@@ -65,20 +62,11 @@
                 transform: none;       
                 width: 100%;           
                 margin-top: 20px;
-                /* Since flex-wrap is gone, we can't use 'order' to push it down 
-                   if it is structurally in the middle. 
-                   However, since we want videos side-by-side, 
-                   the image CANNOT constitute a column in the middle anymore.
-                   The HTML structure places the image BETWEEN the videos.
-                   To fix this, we will use absolute positioning to move it 
-                   below the videos on mobile.
-                */
                 position: absolute;
-                top: 100%; /* Push to bottom of container */
+                top: 100%;
                 left: 0;
             }
             
-            /* Add margin to bottom of container to make room for the moved image */
             .secondary-videos {
                 margin-bottom: 300px; 
             }
@@ -93,6 +81,28 @@
             background: white; border: none; padding: 20px 40px;
             cursor: pointer; font-size: 24px; border-radius: 10px;
         }
+
+        /* --- SECRET MENU STYLE --- */
+        #secret-time-menu {
+            display: none; 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            background: #1a1a1a; 
+            border: 1px solid #444; 
+            padding: 15px; 
+            border-radius: 8px; 
+            z-index: 10000; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            text-align: left;
+        }
+        #secret-time-menu input[type="time"] {
+            padding: 5px; background: #000; color: white; border: 1px solid #555; border-radius: 3px; font-family: Arial, sans-serif; font-size: 16px;
+        }
+        #secret-time-menu button {
+            padding: 6px 12px; margin-left: 5px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; cursor: pointer;
+        }
+        #secret-time-menu button:hover { background: #555; }
     </style>
 </head>
 <body>
@@ -103,7 +113,17 @@
         </button>
     </div>
 
+    <div id="secret-time-menu">
+        <label for="time-input" style="display: block; margin-bottom: 10px; font-size: 14px; color: #ccc;">
+            Jump to Time of Day:
+        </label>
+        <input type="time" id="time-input" value="12:00" required>
+        <button onclick="applyTimeOffset()">Apply</button>
+        <button onclick="document.getElementById('secret-time-menu').style.display='none'">X</button>
+    </div>
+
     <h1>Traffic Piece - Sebastian Adams</h1>
+    
     <div id="video-container">
         <div id="player-main" class="main-video"></div>
         
@@ -117,8 +137,7 @@
             <div id="player-side2" class="secondary-video"></div>
         </div>
     </div>
-
-    <script>
+<script>
         const TEST_MODE = false; 
         const TEST_START_OFFSET = 9000; 
 
@@ -128,6 +147,11 @@
         const VIDEO_DURATION = 42900; 
 
         let pageLoadTime = null;
+        
+        // --- SECRET FEATURE STATE VARIABLES ---
+        let hasStarted = false;
+        let secretBuffer = "";
+        let userTimeOffsetSeconds = 0;
 
         const RAW_FILES = [
             "00blank.png", "0715.png", "0719.png", "0722.png", "0725.png", "0728.png", "0731.png", "0734.png", 
@@ -169,7 +193,24 @@
 
         let players = [];
 
+        // --- KEYSTROKE LISTENER ---
+        document.addEventListener('keypress', function(e) {
+            if (!hasStarted) return; 
+            secretBuffer += e.key.toLowerCase();
+            
+            if (secretBuffer.length > 4) {
+                secretBuffer = secretBuffer.slice(-4);
+            }
+            
+            if (secretBuffer === 'time') {
+                document.getElementById('secret-time-menu').style.display = 'block';
+                secretBuffer = ""; 
+            }
+        });
+
         function updateOverlayImage() {
+            if (!document.getElementById('overlay-container')) return; 
+
             const secsPlayed = getSecondsSinceStart();
             const startOfDaySeconds = (VIDEO_START_HOUR * 3600) + (VIDEO_START_MIN * 60) + VIDEO_START_SEC;
             
@@ -207,13 +248,13 @@
 
         function getSecondsSinceStart() {
             if (TEST_MODE) {
-                if (!pageLoadTime) return TEST_START_OFFSET;
+                if (!pageLoadTime) return TEST_START_OFFSET + userTimeOffsetSeconds;
                 const secondsPassedSinceClick = Math.floor((Date.now() - pageLoadTime) / 1000);
-                return TEST_START_OFFSET + secondsPassedSinceClick;
+                return TEST_START_OFFSET + secondsPassedSinceClick + userTimeOffsetSeconds;
             }
             const now = new Date();
             const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), VIDEO_START_HOUR, VIDEO_START_MIN, VIDEO_START_SEC);
-            return Math.floor((now - start) / 1000);
+            return Math.floor((now - start) / 1000) + userTimeOffsetSeconds;
         }
 
         const tag = document.createElement('script');
@@ -224,12 +265,7 @@
             // API is ready
         }
 
-        function startEverything() {
-            document.getElementById('video-overlay').style.display = 'none';
-
-            pageLoadTime = Date.now();
-            const secondsSinceStart = getSecondsSinceStart();
-            
+        function setupYoutubePlayers(secondsSinceStart) {
             const playerConfig = (videoId, extraTimeOffset = 0, volumeLevel = 100) => {
                 return {
                     videoId: videoId,
@@ -241,27 +277,81 @@
                     },
                     events: {
                         'onReady': (event) => {
-                            event.target.setVolume(volumeLevel); // Correct way to set volume
+                            event.target.setVolume(volumeLevel); 
                             event.target.playVideo();
                         }
                     }
                 };
             };
 
+            players = []; // Ensure the array is clean before pushing new players
+            players.push(new YT.Player('player-main', playerConfig(VIDEOS.main, 226, 100)));
+            players.push(new YT.Player('player-side1', playerConfig(VIDEOS.secondary1, 0, 25)));
+            players.push(new YT.Player('player-side2', playerConfig(VIDEOS.secondary2, 0, 25)));
+
+            updateOverlayImage();
+        }
+
+        function startEverything() {
+            hasStarted = true; 
+            document.getElementById('video-overlay').style.display = 'none';
+            pageLoadTime = Date.now();
+            
+            const secondsSinceStart = getSecondsSinceStart();
+            
             if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
-                // Main: 100% volume
-                players.push(new YT.Player('player-main', playerConfig(VIDEOS.main, 226, 100)));
-                // Sides: 25% volume (lowered as requested)
-                players.push(new YT.Player('player-side1', playerConfig(VIDEOS.secondary1, 0, 25)));
-                players.push(new YT.Player('player-side2', playerConfig(VIDEOS.secondary2, 0, 25)));
-
-                updateOverlayImage();
+                setupYoutubePlayers(secondsSinceStart);
                 setInterval(updateOverlayImage, 10000);
-
             } else {
                 document.getElementById("video-container").innerHTML = "<p>This video will return tomorrow at 06:26:24</p>";
             }
         }
+
+        // --- APPLY SECRET TIME OFFSET (CORRECTED LOGIC) ---
+        function applyTimeOffset() {
+            const timeVal = document.getElementById('time-input').value; 
+            if (!timeVal) return;
+            
+            const [targetHours, targetMins] = timeVal.split(':').map(Number);
+            const targetSecondsFromMidnight = (targetHours * 3600) + (targetMins * 60);
+            const startSecondsFromMidnight = (VIDEO_START_HOUR * 3600) + (VIDEO_START_MIN * 60) + VIDEO_START_SEC;
+            const desiredSecondsSinceStart = targetSecondsFromMidnight - startSecondsFromMidnight;
+            
+            userTimeOffsetSeconds = 0; 
+            const naturalSecondsSinceStart = getSecondsSinceStart();
+            
+            userTimeOffsetSeconds = desiredSecondsSinceStart - naturalSecondsSinceStart;
+            const secondsSinceStart = getSecondsSinceStart(); 
+            
+            // 1. Check if the requested time is valid FIRST
+            if (secondsSinceStart >= 0 && secondsSinceStart <= VIDEO_DURATION) {
+                
+                // 2. If valid, check if players are already active
+                if (players.length >= 3) {
+                    players[0].seekTo(secondsSinceStart + 226, true);
+                    players[1].seekTo(secondsSinceStart, true);
+                    players[2].seekTo(secondsSinceStart, true);
+                } else {
+                    // 3. If valid but players are missing (we were on the 'tomorrow' screen), rebuild them
+                    document.getElementById("video-container").innerHTML = `
+                        <div id="player-main" class="main-video"></div>
+                        <div id="secondary-wrapper" class="secondary-videos">
+                            <div id="player-side1" class="secondary-video"></div>
+                            <div id="overlay-container" class="center-overlay" style="display:none;">
+                                <img id="dynamic-image" src="" alt="">
+                            </div>
+                            <div id="player-side2" class="secondary-video"></div>
+                        </div>`;
+                    setupYoutubePlayers(secondsSinceStart);
+                    setInterval(updateOverlayImage, 10000);
+                }
+            } else {
+                // 4. Time is invalid (before start or after end). Tear it down.
+                document.getElementById("video-container").innerHTML = "<p>This video will return tomorrow at 06:26:24</p>";
+                players = []; 
+            }
+            
+            updateOverlayImage();
+            document.getElementById('secret-time-menu').style.display = 'none';
+        }
     </script>
-</body>
-</html>
