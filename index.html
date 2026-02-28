@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://livejs.com/live.js"></script>
+
     <title>Traffic Piece - Sebastian Adams</title>
     <style>
         body {
@@ -72,15 +74,32 @@
             }
         }
 
-        #video-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); display: flex;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-        #play-button {
-            background: white; border: none; padding: 20px 40px;
-            cursor: pointer; font-size: 24px; border-radius: 10px;
-        }
+			#video-overlay {
+				position: fixed; 
+				top: 0; 
+				left: 0; 
+				width: 100%; 
+				height: 100%;
+				background: rgba(0, 0, 0, 0.9); 
+				display: flex;
+				flex-direction: column; /* This stacks the button and text vertically */
+				justify-content: center; 
+				align-items: center; 
+				z-index: 9999;
+				overflow-y: auto; /* Allows scrolling if the text gets too tall for the screen */
+				padding: 20px; /* Keeps content from touching the very edge of the screen */
+			}
+
+			#play-button {
+				background: white; 
+				border: none; 
+				padding: 20px 40px;
+				cursor: pointer; 
+				font-size: 24px; 
+				border-radius: 10px;
+/* 				margin-bottom: 20px; /* Adds breathing room between the button and the text */ */
+				flex-shrink: 0; /* Prevents the button from shrinking on small screens */
+			}
 
         /* --- SECRET MENU STYLE --- */
         #secret-time-menu {
@@ -103,6 +122,65 @@
             padding: 6px 12px; margin-left: 5px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; cursor: pointer;
         }
         #secret-time-menu button:hover { background: #555; }
+        
+        #context-section {
+        	width: 90%; /* This fixes the text cutting off on the right side of mobile screens */
+			max-width: 650px;
+			margin: 30px auto;
+			text-align: left; 
+			line-height: 1.5;
+			
+		}
+
+		#context-section h2 {
+			text-align: center;
+			margin-bottom: 5px;
+		}
+		
+		.info-page {
+			/* -- Fixes the centering -- */
+			padding: 0 0px; /* This adds 15px of padding to BOTH the left and right */
+			padding-right: 30px;
+
+	
+			/* -- Fixes the height on desktop/mobile -- */
+			max-height: calc(100vh - 250px); /* 100% of screen height minus 250px for buttons/links */
+	
+			overflow-y: auto;
+			margin-bottom: 20px;
+		}
+		.score-link {
+			display: block;
+			text-align: center;
+/* 			margin-bottom: 25px; */
+			font-weight: bold;
+		}
+
+		.schedule-list {
+			margin: 15px 0;
+			padding-left: 20px;
+			line-height: 1.8; /* Gives a little breathing room between the schedule times */
+		}
+
+		.pagination {
+			text-align: center;
+			font-family: monospace; 
+			font-size: 1.1em;
+			user-select: none;
+			margin-bottom: 15px; /* Space between the "1 of 2" and the download link */		
+		}
+
+		.nav-arrow {
+			cursor: pointer;
+/* 			padding: 0 15px; */
+			font-weight: bold;
+		}
+
+		.nav-arrow:hover {
+			opacity: 0.7;
+		}
+        
+        
     </style>
 </head>
 <body>
@@ -111,6 +189,50 @@
         <button id="play-button" onclick="startEverything()">
              <span style="font-size: 32px;">&#9658;</span>
         </button>
+        <div id="context-section">
+<!-- 			<h2>Traffic Piece</h2> -->
+
+			<div id="page-1" class="info-page">
+				<p>Traffic Piece was created as a goodbye to <a href="https://archive.ph/CZYm6" target="_blank" rel="noopener noreferrer">Unit 44</a>, a venue Kirkos ran which was heavily impacted by traffic sound. It ran from rush hour in the morning to rush hour at night. I got the idea for this piece during a beautiful saxophone performance by <a href="https://jostenmyburgh.com/" target="_blank" rel="noopener noreferrer">Josten Myburgh</a> where his barely audible multiphonics fought for attention with the traffic outside in a way that really captivated me. After four years watching the traffic pass Unit 44, I thought sitting down and really listening to it would be the perfect way to say goodbye to the venue.</p>
+
+				<p>A bunch of the performers (listed on the next page) who contributed a lot to Unit 44 played a 14-hour long score (working in shifts) made from a full week of security cam footage of the street outside Unit 44, while they and the audience also watched the traffic in real life.</p>
+
+				<p>These different time cycles (moment to moment, rush hour to rush hour, Monday to Sunday) will mingle with pitch material derived from the resonances of Unit 44 itself to influence a ritualistic performance which is fully about the specific place that Unit 44 is and has been, and about the way the outside world has spilled into it.</p>
+
+				<p>This web version locks the viewer to the specific moment from the performance corresponding to the current time of day.</p>
+			</div>
+
+			<div id="page-2" class="info-page" style="display: none;">
+				<p>The piece finished with a guided improvisation using the traffic as a score, open to all.</p>
+		
+				<div class="schedule-list">
+					06:30 - 08:10 Shift 1: Sebastian Adams and Tom Roseingrave<br>
+					08:10 - 08:30: traffic only<br>
+					08:30 - 10:10: Shift 2: David Bremner and Sharon Phelan<br>
+					10:10 - 10:30: traffic only<br>
+					10:30 - 12:30: Shift 3: Aonghus McEvoy, Susan Geaney, David Lacey, Nick Roth<br>
+					12:10 - 12:30: traffic only<br>
+					12:30 - 14:10: Beethoven Freeze: Sebastian Adams and Robert Coleman<br>
+					14:10 - 14:30: traffic only<br>
+					14:30 - 16:10: Shift 5: Kevin Free and Jane Hackett<br>
+					16:10 - 16:30: traffic only<br>
+					16:30 - 18:00: in nomine: Sebastian Adams, Hannah Miller, Caitríona O'Mahony<br>
+					18:00 - 18:30: traffic only<br>
+					18:30 until the traffic ceases: Shift 7: open improv jam (all welcome)
+				</div>
+
+				<p>Joan Somers Donnelly made a parallel performance taking notes on the passing traffic almost all day.</p>
+			</div>
+
+			<div class="pagination">
+				<span id="prev-page" class="nav-arrow" style="visibility: hidden;" onclick="switchPage(1)">&lt;&lt;</span>
+				<span id="page-indicator"> 1 of 2 </span>
+				<span id="next-page" class="nav-arrow" onclick="switchPage(2)">&gt;&gt;</span>
+			</div>
+						<a href="https://sebastianadams.net/media/scores/TRAFFIC_PIECE.pdf" target="_blank" rel="noopener noreferrer" class="score-link">Download Score</a>
+
+			
+</div>
     </div>
 
     <div id="secret-time-menu">
@@ -354,4 +476,26 @@
             updateOverlayImage();
             document.getElementById('secret-time-menu').style.display = 'none';
         }
+        
+    function switchPage(pageNumber) {
+    const page1 = document.getElementById('page-1');
+    const page2 = document.getElementById('page-2');
+    const indicator = document.getElementById('page-indicator');
+    const prevArrow = document.getElementById('prev-page');
+    const nextArrow = document.getElementById('next-page');
+
+    if (pageNumber === 1) {
+        page1.style.display = 'block';
+        page2.style.display = 'none';
+        indicator.innerText = ' 1 of 2 ';
+        prevArrow.style.visibility = 'hidden';
+        nextArrow.style.visibility = 'visible';
+    } else {
+        page1.style.display = 'none';
+        page2.style.display = 'block';
+        indicator.innerText = ' 2 of 2 ';
+        prevArrow.style.visibility = 'visible';
+        nextArrow.style.visibility = 'hidden';
+    }
+}
     </script>
