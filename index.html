@@ -105,8 +105,13 @@
         #secret-time-menu {
             display: none; 
             position: fixed; 
-            top: 20px; 
-            right: 20px; 
+            
+            /* --- New Centering CSS --- */
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            /* ------------------------- */
+
             background: #1a1a1a; 
             border: 1px solid #444; 
             padding: 15px; 
@@ -149,8 +154,7 @@
 			overflow-y: auto;
 			margin-bottom: 20px;
 		}
-		.score-link {
-			display: block;
+		.score-link {			display: block;
 			text-align: center;
 /* 			margin-bottom: 25px; */
 			font-weight: bold;
