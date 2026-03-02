@@ -467,6 +467,7 @@
         function setupYoutubePlayers(secondsSinceStart) {
             const playerConfig = (videoId, extraTimeOffset = 0, volumeLevel = 100) => {
                 return {
+                	host: 'https://www.youtube-nocookie.com',
                     videoId: videoId,
                     playerVars: { 
                         'start': secondsSinceStart + extraTimeOffset, 
@@ -524,6 +525,7 @@
 					let idToPlay = activeVid ? activeVid.id : 'ZOJbffEPIlg'; 
 			
 					players.push(new YT.Player('player-sleeping', {
+						host: 'https://www.youtube-nocookie.com',
 						videoId: idToPlay,
 						playerVars: { 
 							'start': Math.floor(offset),
