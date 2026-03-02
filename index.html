@@ -474,6 +474,8 @@
                         'controls': 0, 
                         'disablekb': 1,
                         'origin': window.location.origin,
+                        'playsinline': 1, /* <--- TELLS IPHONE NOT TO GO FULLSCREEN */
+                        'autoplay': 1     /* <--- HELPS BYPASS iPHONE AUTOPLAY BLOCKS */
                     },
                     events: {
                         'onReady': (event) => {
@@ -532,6 +534,8 @@
 							'controls': 0, 
 							'disablekb': 1,
 							'origin': window.location.origin,
+							'playsinline': 1, /* <--- TELLS IPHONE NOT TO GO FULLSCREEN */
+                        	'autoplay': 1     /* <--- HELPS BYPASS iPHONE AUTOPLAY BLOCKS */
 						},
 						events: {
 							'onReady': (event) => {
